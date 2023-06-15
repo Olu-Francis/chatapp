@@ -91,7 +91,7 @@ def connect(auth):
         return
 
     join_room(room)
-    alert = {"name": name, "message": "has joined"}
+    alert = {"name": name, "message": " joined"}
     send(alert, to=room)
     # Increment the members field of the room document
     rooms.update_one({"room_code": room}, {"$inc": {"members": 1}})
