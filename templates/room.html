@@ -29,6 +29,7 @@
         </div>
         `;
         messages.innerHTML += content;
+        scrollToBottom();
     };
 
     socketio.on("message", (data) => {
@@ -41,6 +42,12 @@
         socketio.emit("message", {data: message.value});
         message.value = "";
     };
+
+    const scrollToBottom = () => {
+        messages.scrollTop = messages.scrollHeight;
+    };
+
+    window.addEventListener("load", scrollToBottom);
 </script>
 {% for msg in messages %}
     <script type="text/javascript">
