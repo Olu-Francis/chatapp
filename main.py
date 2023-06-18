@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, join_room, leave_room, send
 import random
 from string import ascii_uppercase
 from pymongo import MongoClient
+import bcrypt
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = 'secret!1233'
@@ -46,7 +47,7 @@ def index():
             # Generate a unique room code
             room = generate_unique_code(4)
             # Insert a new document into the rooms collection
-            rooms.insert_one({"room_code": room, "members": 0, "messages": []})
+            rooms.insert_one({"room_code": room, "members": 0, "messages": [], "members_list": []})
         elif not rooms.find_one({"room_code": code}):
             return render_template('index.html', error="Room does not exist.", code=code, name=name)
 
@@ -78,6 +79,21 @@ def message(data):
     send(content, to=room)
     # Update the messages field of the room document
     rooms.update_one({"room_code": room}, {"$push": {"messages": content}})
+
+def get_online_members(diff):
+    name = session.get("name")
+    # Get the online members in the room
+    room_data = rooms.find_one({"room_code": room})
+    online_members = room_data.get("members_list", [])
+    send({"online_members": online_members}, to=room)
+    rooms.update_one({"room_code": room}, {diff: {"members_list": name}})
+
+@socketio.on("online_members")
+def online_members():
+    if connect():
+        get_online_members("$push")
+    elif disconnect():
+        get_online_members("$pull")
 
 @socketio.on("connect")
 def connect(auth):
@@ -112,10 +128,15 @@ def disconnect():
         #     # If there are no more members in the room, delete the room document
         #     rooms.delete_one({"room_code": room})
 
+    room_data = rooms.find_one({"room_code": room})
+    online_members = room_data.get("members_list", [])
+    send({"online_members": online_members}, to=room)
     alert = {"name": name, "message": "has left."}
     send(alert, to=room)
     # Update the messages field of the room document
     rooms.update_one({"room_code": room}, {"$push": {"messages": alert}})
+    rooms.update_one({"room_code": room}, {"$pull": {"members_list": name}})
+    # Get and update the online members in the room
 
 if __name__ == "__main__":
     socketio.run(app, host="localhost", port=5000, debug=True, allow_unsafe_werkzeug=True)
