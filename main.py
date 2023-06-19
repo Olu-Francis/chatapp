@@ -13,6 +13,7 @@ socketio = SocketIO(app)
 client = MongoClient("mongodb+srv://dansmatd123:Mongodbpass1.@cluster0.8snbx2x.mongodb.net/")
 db = client["chat_database"]
 rooms = db["rooms"]
+users = db["users"]
 
 def generate_unique_code(length):
     while True:
@@ -32,12 +33,12 @@ def index():
         email = request.form.get("email")
         password = request.form.get("password")
 
-        user = rooms.find_one({'email': email})
+        user = users.find_one({'email': email})
         print(user)
 
         if user:
             if bcrypt.checkpw(password.encode('utf-8'), user['password']):
-                # session['name'] = room.find_one({'name': name})
+                # session['name'] = user.find_one({'name': })
                 return redirect('/home')
             else:
                 return render_template('sign_in.html', error='Invalid password')
@@ -52,7 +53,7 @@ def register():
     email = request.form.get("email")
     password = request.form.get("password")
 
-    existing_user = rooms.find_one({'name': name})
+    existing_user = users.find_one({'name': name})
     if existing_user:
         return render_template('sign_in.html', error='Username already exists')
 
@@ -64,7 +65,7 @@ def register():
         'password': hashed_password,
     }
 
-    rooms.insert_one(new_user)
+    users.insert_one(new_user)
 
     session['name'] = name
     return redirect('/home')
@@ -146,6 +147,9 @@ def connect(auth):
     join_room(room)
     # Increment the members field of the room document
     rooms.update_one({"room_code": room}, {"$inc": {"members": 1}})
+    room_data = rooms.find_one({"room_code": room})
+    online_members = room_data.get("members_list", [])
+    send({"online_members": online_members}, to=room)
 
 @socketio.on("disconnect")
 def disconnect():

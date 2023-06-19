@@ -17,6 +17,13 @@
             <h1>Sign in</h1>
             <input type="email" name="email" placeholder="Email" />
             <input type="password" name="password" placeholder="Password" />
+            {% if error%}
+            <ul class="error">
+                <li>
+                    {{error}}
+                </li>
+            </ul>
+            {% endif %}
             <a href="#">Forgot your password?</a>
             <button>Sign In</button>
         </form>
@@ -25,7 +32,7 @@
         <div class="overlay">
             <div class="overlay-panel overlay-left">
                 <h1>Welcome Back!</h1>
-                <p>To keep connected with your firends and famoly, please login with your personal info.</p>
+                <p>To keep connected with your firends and family, please login with your personal info.</p>
                 <button class="ghost" id="signIn">Sign In</button>
             </div>
             <div class="overlay-panel overlay-right">

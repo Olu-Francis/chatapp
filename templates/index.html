@@ -3,26 +3,25 @@
 <form method="post" class="form">
     <h1>Welcome to ChattyDChat Chatsite!!!</h1>
     <h3>Enter The Chat Room</h3>
-    <div>
+    <div class="join">
         <label for="name">Nickname:</label>
         <input type="text" name="name" placeholder="Pick a name" value="{{name}}">
-    </div>
 
-    <div class="join">
-        <label for="code">Please enter your room code</label>
-        <input type="text" name="code" placeholder="Room code" value="{{code}}">
-        <button type="submit" name="join">Join a Room</button>
-    </div>
-    <div class="join">
+        <label for="code">Room code</label>
+        <input type="text" name="code" placeholder="Enter Room Code" value="{{code}}">
+        {% if error%}
+        <ul class="error">
+            <li>
+                {{error}}
+            </li>
+        </ul>
+        {% endif %}
+        <button type="submit" name="join">Join a Room</button><br>
+
+        <p>OR</p>
+        
         <label for="create">Create a new room here</label>
         <button type="submit" name="create" class="create-btn">Create a Room</button>
     </div>
-    {% if error%}
-    <ul>
-        <li>
-            {{error}}
-        </li>
-    </ul>
-    {% endif %}
 </form>
 {% endblock %}
