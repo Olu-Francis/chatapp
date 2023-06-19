@@ -124,13 +124,6 @@ def message(data):
     # Update the messages field of the room document
     rooms.update_one({"room_code": room}, {"$push": {"messages": content}})
 
-def get_online_members(diff):
-    name = session.get("name")
-    # Get the online members in the room
-    room_data = rooms.find_one({"room_code": room})
-    online_members = room_data.get("members_list", [])
-    send({"online_members": online_members}, to=room)
-    rooms.update_one({"room_code": room}, {diff: {"members_list": name}})
 
 
 @socketio.on("connect")
@@ -147,9 +140,8 @@ def connect(auth):
     join_room(room)
     # Increment the members field of the room document
     rooms.update_one({"room_code": room}, {"$inc": {"members": 1}})
-    room_data = rooms.find_one({"room_code": room})
-    online_members = room_data.get("members_list", [])
-    send({"online_members": online_members}, to=room)
+    rooms.update_one({"room_code": room}, {"$push": {"members_list": name}})
+    get_online_members()
 
 @socketio.on("disconnect")
 def disconnect():
@@ -170,6 +162,15 @@ def disconnect():
     send({"online_members": online_members}, to=room)
     # Update the messages field of the room document
     rooms.update_one({"room_code": room}, {"$pull": {"members_list": name}})
+    get_online_members()
+
+
+def get_online_members():
+    room = session.get("room")
+    # Get the online members in the room
+    room_data = rooms.find_one({"room_code": room})
+    online_members = room_data.get("members_list", [])
+    socketio.emit("online_members", {"online_members": online_members}, room=room)
 
 if __name__ == "__main__":
     socketio.run(app, host="localhost", port=5000, debug=True, allow_unsafe_werkzeug=True)

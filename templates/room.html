@@ -2,7 +2,7 @@
 {% block content %}
 <div class="containers bootstrap snippets bootdey">
     <div class="row">
-        <div class="col-md-2 bg-white ">
+        <div class="col-md-3 bg-white ">
             <h3 class=" border-bottom padding-sm">
                 Members
             </h3>
@@ -23,35 +23,10 @@
 
         <!--=========================================================-->
         <!-- selected chat -->
-        <div class="col-md-10 bg-white ">
+        <div class="col-md-9 bg-white ">
             <h2 class="chat_room_name">Chat Room: {{code}}</h2>
             <div class="chat-message">
-                <ul class="chat messages" id="messages">
-                    <!-- <li class="left clearfix">
-                        <div class="chat-body clearfix">
-                            <div class="header">
-                                <strong class="primary-font">${name}</strong>
-                                <small class="pull-right text-muted"><i class="fa fa-clock-o"></i> 12 mins
-                                    ago</small>
-                            </div>
-                            <p>
-                                ${msg}
-                            </p>
-                        </div>
-                    </li>
-                    <li class="right clearfix">
-                        <div class="chat-body clearfix">
-                            <div class="header">
-                                <strong class="primary-font">${name}</strong>
-                                <small class="pull-right text-muted"><i class="fa fa-clock-o"></i> 13 mins
-                                    ago</small>
-                            </div>
-                            <p>
-                                ${msg}
-                            </p>
-                        </div>
-                    </li> -->
-                </ul>
+                <ul class="chat messages" id="messages"></ul>
                 <div class="chat-box bg-white">
                     <div class="input-group">
                         <input class="form-control border no-shadow no-rounded" id="message"
@@ -103,16 +78,32 @@
             message.value = "";
         };
 
+        const online_members = (member) => {
+            const memberList = document.querySelector(".member-list");
+            const memberItem = `
+            <li class="active bounceInDown">
+                <a href="#" class="clearfix">
+                    <div class="member-name">
+                        <strong>${member}</strong>
+                    </div>
+                    <small class="time text-muted">Online</small>
+                </a>
+            </li>
+            `;
+            memberList.innerHTML += memberItem;
+        };
+
+
         socketio.on("online_members", (data) => {
             const memberList = document.querySelector(".member-list");
             memberList.innerHTML = ""; // Clear the existing member list
 
-            data.online_members.forEach((member) => {
-                const memberItem = document.createElement("li");
-                memberItem.innerText = member;
-                memberList.appendChild(memberItem);
+            const onlineMembers = data.online_members;
+            onlineMembers.forEach((member) => {
+                online_members(member);
             });
         });
+
 
 
         // Listen for keypress event on the input field
