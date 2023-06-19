@@ -1,89 +1,130 @@
 {% extends 'base.html'%}
 {% block content %}
-<h1>ChattyDChat Chatsite</h1>
-<div class="container">
-    <div class="room-members">
-        <h3>Online Members:</h3>
-        <ul id="online-members"></ul>
-    </div>
-    <div class="message-box" id="message-box">
-        <h2>Chat Room: {{code}}</h2>
-        <div class="messages" id="messages"></div>
-        <div class="inputs">
-            <input type="text" name="message" id="message" row="3" placeholder="Type message">
-            <button type="button" name="send" id="send-btn" onclick="sendMessage()">Send</button>
+<div class="container bootstrap snippets bootdey">
+    <div class="row">
+        <div class="col-md-2 bg-white ">
+            <h3 class=" row border-bottom padding-sm">
+                Members
+            </h3>
+
+            <!-- =============================================================== -->
+            <!-- member list -->
+            <!-- <ul class="member-list">
+                    <li class="active bounceInDown">
+                        <a href="#" class="clearfix">
+                            <div class="member-name">
+                                <strong>John Doe</strong>
+                            </div>
+                            <small class="time text-muted">Online</small>
+                        </a>
+                    </li>
+                </ul> -->
+        </div>
+
+        <!--=========================================================-->
+        <!-- selected chat -->
+        <div class="col-md-10 bg-white ">
+            <h2 class="chat_room_name">Chat Room: {{code}}</h2>
+            <div class="chat-message messages" id="messages">
+                <ul class="chat messages" id="messages">
+                    <li class="left clearfix">
+                        <div class="chat-body clearfix">
+                            <div class="header">
+                                <strong class="primary-font">${name}</strong>
+                                <small class="pull-right text-muted"><i class="fa fa-clock-o"></i> 12 mins
+                                    ago</small>
+                            </div>
+                            <p>
+                                ${msg}
+                            </p>
+                        </div>
+                    </li>
+                    <li class="right clearfix">
+                        <div class="chat-body clearfix">
+                            <div class="header">
+                                <strong class="primary-font">${name}</strong>
+                                <small class="pull-right text-muted"><i class="fa fa-clock-o"></i> 13 mins
+                                    ago</small>
+                            </div>
+                            <p>
+                                ${msg}
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+                <div class="chat-box bg-white">
+                    <div class="input-group">
+                        <input class="form-control border no-shadow no-rounded" id="message" placeholder="Type your message here">
+                        <span class="input-group-btn">
+                            <button class="btn btn-success no-rounded" id="send-btn" type="button">Send</button>
+                        </span>
+                    </div><!-- /input-group -->
+                </div>
+            </div>
         </div>
     </div>
-</div>
-<script type="text/javascript">
-    let socketio = io();
+    <script type="text/javascript">
+        let socketio = io();
 
-    const messages = document.getElementById("messages");
-    const messageInput = document.getElementById('message');
-    const sendButton = document.getElementById('send-btn');
+        const messages = document.getElementById("messages");
+        const messageInput = document.getElementById('message');
+        const sendButton = document.getElementById('send-btn');
 
-    const createMessage = (name, msg) => {
-        const content = `
-        <div class="text">
-            <span>
-                <strong>${name}</strong>: ${msg}
-            </span>
-            <span class="muted">
-                now
-            </span>
-        </div>
+        const createMessage = (name, msg) => {
+            const content = `
+            <li class="left clearfix messages">
+                <div class="chat-body clearfix">
+                    <div class="header">
+                        <strong class="primary-font">${name}</strong>
+                        <small class="pull-right text-muted"><i class="fa fa-clock-o"></i> 12 mins
+                            ago</small>
+                    </div>
+                    <p>
+                        ${msg}
+                    </p>
+                </div>
+            </li>
         `;
-        messages.innerHTML += content;
-        scrollToBottom();
-    };
+            messages.innerHTML += content;
+            scrollToBottom();
+        };
 
-    socketio.on("message", (data) => {
-        createMessage(data.name, data.message);
-    });
-
-    socketio.on("online_members", (onlineMembers) => {
-        const onlineMembersList = document.getElementById("online-members");
-        onlineMembersList.innerHTML = ""; // Clear the existing list
-
-        onlineMembers.forEach((member) => {
-            const listItem = document.createElement(`
-            <li>${member}</li>
-            `);
-            listItem.textContent = member;
-            onlineMembersList.appendChild(listItem);
+        socketio.on("message", (data) => {
+            createMessage(data.name, data.message);
         });
-    });
 
 
-    const sendMessage = () => {
-        const message = document.getElementById("message");
-        if (message.value == "") return;
-        socketio.emit("message", {
-            data: message.value
+
+
+        const sendMessage = () => {
+            const message = document.getElementById("message");
+            if (message.value == "") return;
+            socketio.emit("message", {
+                data: message.value
+            });
+            message.value = "";
+        };
+
+        // Listen for keypress event on the input field
+        messageInput.addEventListener('keypress', function (event) {
+            if (event.keyCode === 13) { // Enter key code is 13
+                event.preventDefault(); // Prevent line break
+                sendMessage(); // Call the sendMessage function
+            }
         });
-        message.value = "";
-    };
 
-    // Listen for keypress event on the input field
-    messageInput.addEventListener('keypress', function(event) {
-      if (event.keyCode === 13) { // Enter key code is 13
-        event.preventDefault(); // Prevent line break
-        sendMessage(); // Call the sendMessage function
-      }
-    });
+        // Listen for click event on the send button
+        sendButton.addEventListener('click', sendMessage);
 
-    // Listen for click event on the send button
-    sendButton.addEventListener('click', sendMessage);
+        const scrollToBottom = () => {
+            messages.scrollTop = messages.scrollHeight;
+        };
 
-    const scrollToBottom = () => {
-        messages.scrollTop = messages.scrollHeight;
-    };
-
-    window.addEventListener("load", scrollToBottom);
-</script>
-{% for msg in messages %}
-<script type="text/javascript">
-    createMessage("{{msg.name}}", "{{msg.message}}");
-</script>
-{% endfor %}
-{% endblock %}
+        window.addEventListener("load", scrollToBottom);
+    </script>
+    {% for msg in messages %}
+    <script type="text/javascript">
+        createMessage("{{msg.name}}", "{{msg.message}}");
+    </script>
+    {% endfor %}
+    {% endblock %}

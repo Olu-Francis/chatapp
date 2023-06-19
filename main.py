@@ -26,8 +26,51 @@ def generate_unique_code(length):
 
     return code
 
-@app.route('/', methods=["POST", "GET"])
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    if request.method == 'POST':
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        user = rooms.find_one({'email': email})
+        print(user)
+
+        if user:
+            if bcrypt.checkpw(password.encode('utf-8'), user['password']):
+                # session['name'] = room.find_one({'name': name})
+                return redirect('/home')
+            else:
+                return render_template('sign_in.html', error='Invalid password')
+        else:
+            return render_template('sign_in.html', error='User not found')
+
+    return render_template('sign_in.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+    name = request.form.get("uname")
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    existing_user = rooms.find_one({'name': name})
+    if existing_user:
+        return render_template('sign_in.html', error='Username already exists')
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    new_user = {
+        'name': name,
+        'email': email,
+        'password': hashed_password,
+    }
+
+    rooms.insert_one(new_user)
+
+    session['name'] = name
+    return redirect('/home')
+
+@app.route('/home', methods=["POST", "GET"])
+def home():
     session.clear()
     if request.method == "POST":
         name = request.form.get("name")
@@ -88,12 +131,6 @@ def get_online_members(diff):
     send({"online_members": online_members}, to=room)
     rooms.update_one({"room_code": room}, {diff: {"members_list": name}})
 
-@socketio.on("online_members")
-def online_members():
-    if connect():
-        get_online_members("$push")
-    elif disconnect():
-        get_online_members("$pull")
 
 @socketio.on("connect")
 def connect(auth):
@@ -107,12 +144,8 @@ def connect(auth):
         return
 
     join_room(room)
-    alert = {"name": name, "message": " joined the room"}
-    send(alert, to=room)
     # Increment the members field of the room document
     rooms.update_one({"room_code": room}, {"$inc": {"members": 1}})
-    # Update the messages field of the room document
-    rooms.update_one({"room_code": room}, {"$push": {"messages": alert}})
 
 @socketio.on("disconnect")
 def disconnect():
@@ -131,12 +164,8 @@ def disconnect():
     room_data = rooms.find_one({"room_code": room})
     online_members = room_data.get("members_list", [])
     send({"online_members": online_members}, to=room)
-    alert = {"name": name, "message": "has left."}
-    send(alert, to=room)
     # Update the messages field of the room document
-    rooms.update_one({"room_code": room}, {"$push": {"messages": alert}})
     rooms.update_one({"room_code": room}, {"$pull": {"members_list": name}})
-    # Get and update the online members in the room
 
 if __name__ == "__main__":
     socketio.run(app, host="localhost", port=5000, debug=True, allow_unsafe_werkzeug=True)
