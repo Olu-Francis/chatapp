@@ -52,8 +52,6 @@
                 <div class="chat-body clearfix">
                     <div class="header">
                         <strong class="primary-font">${name}</strong>
-                        <small class="pull-right text-muted"><i class="fa fa-clock-o"></i> 12 mins
-                            ago</small>
                     </div>
                     <p>
                         ${msg}
@@ -65,7 +63,7 @@
         };
 
         socketio.on("message", (data) => {
-            createMessage(data.data, data.message);
+            createMessage(data.name, data.message);
         });
 
 

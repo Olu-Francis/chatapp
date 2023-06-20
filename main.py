@@ -34,7 +34,6 @@ def index():
         password = request.form.get("password")
 
         user = users.find_one({'email': email})
-        print(user)
 
         if user:
             if bcrypt.checkpw(password.encode('utf-8'), user['password']):
@@ -105,7 +104,7 @@ def home():
 def room():
     room = session.get("room")
     if room is None or session.get("name") is None or not rooms.find_one({"room_code": room}):
-        return redirect(url_for("index"))
+        return redirect(url_for("home"))
 
     room_data = rooms.find_one({"room_code": room})
     return render_template("room.html", code=room, messages=room_data['messages'])
